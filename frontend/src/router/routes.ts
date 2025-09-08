@@ -1,6 +1,7 @@
 import type { RouteRecord } from "../types/router";
 import { Home } from "../pages/Home";
 import { About } from "../pages/About";
+import { PongCanvasPage } from "../pages/PongCanvasPage";
 
 export const routes: RouteRecord[] = [
   {
@@ -14,6 +15,12 @@ export const routes: RouteRecord[] = [
     title: "About",
     layout: "default",
     create: () => new About(),
+  },
+  {
+    path: "/pong",
+    title: "Pong Game",
+    layout: "pong",
+    create: () => new PongCanvasPage(),
   },
   {
     path: "*",

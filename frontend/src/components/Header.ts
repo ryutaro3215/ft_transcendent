@@ -43,6 +43,19 @@ export class Header implements Component<HeaderProps> {
                 "Login",
               ),
             ),
+            h(
+              "li",
+              {},
+              h(
+                "a",
+                {
+                  href: "/pong",
+                  className:
+                    "hover:text-gray-300 transition-colors duration-200",
+                },
+                "Pong Game",
+              ),
+            ),
           ),
         ),
       ),
