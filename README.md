@@ -2,9 +2,10 @@
 
 ## Frontend
 
-| name            | tech              |
-| --------------- | ----------------- |
-| build           | vite + typescript |
-| type validation | zod               |
-| type            | module            |
-| css             | tailwindcss       |
+| name               | tech              |
+| ------------------ | ----------------- |
+| build              | vite + typescript |
+| type validation    | zod               |
+| type               | module            |
+| css                | tailwindcss       |
+| package management | npm               |
