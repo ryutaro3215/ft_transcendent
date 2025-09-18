@@ -4,6 +4,7 @@ import type { Socket } from "node:net";
 import { WebSocketServer, WebSocket } from "ws";
 import { GameSession } from "./pong/GameSession";
 import { FastifyPluginAsync } from "fastify";
+import type { ClientMsg } from "./types/pong";
 
 const ALLOW_ORIGIN = process.env.FRONT_ORIGIN ?? "https://localhost:5173";
 
@@ -59,9 +60,15 @@ export const registerPongWs: FastifyPluginAsync = async (
       let text: string;
       if (typeof data === "string") text = data;
       else if (Buffer.isBuffer(data)) text = data.toString("utf-8");
+      else if (Array.isArray(data))
+        text = Buffer.concat(data).toString("utf-8");
+      else if (data instanceof ArrayBuffer)
+        text = Buffer.from(data).toString("utf-8");
       else text = String(data);
 
+      let msg: ClientMsg;
       try {
+
         const msg = JSON.parse(text) as
           | { type: "join"; room?: string }
           | { type: "input"; seq: number; up: boolean; down: boolean }
@@ -76,8 +83,11 @@ export const registerPongWs: FastifyPluginAsync = async (
             session.togglePause();
           }
         }
-      } catch {
-        safeSend(ws, { type: "error", message: "bad message" });
+        case "start": {
+          session.stopRound();
+        }
+        default:
+          safeSend(ws, { type: "error", message: "bad message" });
       }
     });
 
