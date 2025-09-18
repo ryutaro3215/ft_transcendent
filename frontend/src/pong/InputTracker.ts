@@ -28,6 +28,15 @@ export class InputTracker {
   }
 
   private handleKey(e: KeyboardEvent, pressed: boolean) {
+    //This section controll space key state
+    if (e.code === "space") {
+      if (pressed && !e.repeat) {
+        e.preventDefault();
+        this.onStart?.();
+      }
+      return;
+    }
+    // This section controll paddle key state
     let changed = false;
     if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
       // if pressed state isn't equal, change this.state and set up the changed flag to true
