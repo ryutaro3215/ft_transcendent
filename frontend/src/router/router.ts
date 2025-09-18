@@ -59,7 +59,13 @@ export class Router {
     const query = new URLSearchParams(search);
     const rec = this.match(pathname) ?? this.fallback();
     const params = this.extractParams(rec, pathname);
-    const ctx: RouteContext = { path: pathname, params, query };
+    const ctx: RouteContext = {
+      path: pathname,
+      params,
+      query,
+      navigate: (p) => this.push(p),
+      replace: (p) => this.replace(p),
+    };
 
     const page: Page<any> = rec.create(ctx);
 
@@ -126,6 +132,7 @@ export class Router {
     if (abs.origin !== location.origin) return;
 
     e.preventDefault();
-    this.push(abs.pathname + abs.searchParams + abs.hash);
+    this.push(abs.pathname + abs.search + abs.hash);
+    e;
   }
 }

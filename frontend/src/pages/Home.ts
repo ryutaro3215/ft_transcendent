@@ -10,7 +10,6 @@ export class Home implements Page {
       {},
       h("h1", { className: "text-blue-500 text-2xl font-bold mb-4" }, "Home"),
       h("p", {}, "Vanilla TS + Tailwind のコンポーネント設計。"),
-      h("a", { href: "/about" }, "About"),
     );
     container.replaceChildren(this.root);
   }

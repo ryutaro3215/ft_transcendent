@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  backend:
+    image: node:20-bookworm
+    working_dir: /app
+    command: bash -lc 'npm ci && npm run dev'
+    environment:
+      NODE_ENV: development
+      PORT: "3443"                                  # ← HTTPSの待受ポート
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/data:/app/data
+      - ./certs:/certs:ro
+    ports:
+      - "3443:3443"
+
+  frontend:
+    image: node:20-bookworm
+    working_dir: /app
+    command: bash -lc 'npm ci && npm run dev -- --host 0.0.0.0 --port 5173'
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./certs:/certs:ro                            # ← Viteがここから証明書を読む想定
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend

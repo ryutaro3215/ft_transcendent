@@ -6,6 +6,8 @@ export type RouteContext = {
   path: string;
   params: Params;
   query: URLSearchParams;
+  navigate: (path: string) => void;
+  replace: (path: string) => void;
 };
 
 export type RouteRecord = {

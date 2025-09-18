@@ -1,6 +1,7 @@
 // src/components/pong/PongCanvasView.ts
 import type { Component } from "../../types/component";
 import { h } from "../../ui/h";
+import type { RenderState } from "../../types/pong";
 
 export type PongCanvasProps = {
   width?: number; // 表示サイズ（CSS px）
@@ -21,7 +22,6 @@ export class PongCanvasView implements Component<PongCanvasProps> {
   }
 
   mount(container: HTMLElement) {
-    // ラッパ + キャンバス（CSSサイズだけ指定）
     this.root = h(
       "div",
       { className: "w-full flex justify-center" },
@@ -30,7 +30,6 @@ export class PongCanvasView implements Component<PongCanvasProps> {
         style: `width:${this.opts.width}px;height:${this.opts.height}px;display:block;`,
       }) as HTMLCanvasElement),
     );
-
     const ctx = this.canvas.getContext("2d");
     if (!ctx) throw new Error("2D context not available");
     this.ctx = ctx;
@@ -46,62 +45,80 @@ export class PongCanvasView implements Component<PongCanvasProps> {
     this.root.remove();
   }
 
-  /** 高DPI対応：内部解像度を devicePixelRatio 倍にしてから 1回描画 */
-  private setupDPR() {
-    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-    const cssW = this.opts.width;
-    const cssH = this.opts.height;
-    this.canvas.width = Math.round(cssW * dpr);
-    this.canvas.height = Math.round(cssH * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // 論理座標=CSSピクセルで扱えるように
-  }
-
-  /** 見た目だけ静止描画 */
-  private drawStaticScene() {
+  render(state: RenderState) {
     const ctx = this.ctx;
     const W = this.opts.width;
     const H = this.opts.height;
 
-    // 背景グラデーション
+    //background gradation
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#0b1220");
     g.addColorStop(1, "#0a0f1a");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // センターの点線
+    //center line
     ctx.save();
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = "#ffffff";
-    const x = W / 2 - 1.5,
-      w = 3,
-      dashH = 18,
-      gap = 12;
-    for (let y = 0; y < H; y += dashH + gap) ctx.fillRect(x, y, w, dashH);
+    const midX = W / 2 - 1.5;
+    const w = 3;
+    const dashH = 18;
+    const gap = 12;
+
+    for (let y = 0; y < H; y += dashH + gap) {
+      ctx.fillRect(midX, y, w, dashH);
+    }
     ctx.restore();
 
-    // パドル（左/右）
+    const sx = W / state.width;
+    const sy = H / state.height;
     ctx.fillStyle = "#e8edf7";
-    roundRect(ctx, 24, H / 2 - 45, 10, 90, 5); // 左
-    roundRect(ctx, W - (10 + 24), H / 2 - 45, 10, 90, 5); // 右
+    roundRect(ctx, 24, state.leftY * sy, 10, state.paddleH * sy, 0.5);
+    roundRect(ctx, W - (10 + 24), state.rightY * sy, 10, state.paddleH * sy, 5);
 
-    // ボール（中央）
+    //Ball
     ctx.beginPath();
-    ctx.arc(W / 2, H / 2, 6, 0, Math.PI * 2);
+    ctx.arc(
+      state.ballX * sx,
+      state.ballY * sy,
+      Math.max(2, state.ballR * ((sx + sy) / 2), 0, Math.PI * 2),
+      0,
+      Math.PI * 2,
+    );
     ctx.fillStyle = "#f7c948";
     ctx.fill();
 
-    // スコア（ダミー）
+    // Score
     ctx.font =
       "bold 32px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
     ctx.textBaseline = "top";
     ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.fillText("0", W * 0.5 - 60, 16);
-    ctx.fillText("0", W * 0.5 + 36, 16);
+    ctx.fillText(String(state.leftScore), W * 0.5 - 60, 16);
+    ctx.fillText(String(state.rightScore), W * 0.5 + 36, 16);
+  }
+
+  private setupDPR() {
+    const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    const cssW = this.opts.width;
+    const cssH = this.opts.height;
+    this.canvas.width = Math.round(cssW * dpr);
+    this.canvas.height = Math.round(cssH * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  private drawStaticScene() {
+    const ctx = this.ctx,
+      W = this.opts.width,
+      H = this.opts.height;
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#0b1220");
+    g.addColorStop(1, "#0a0f1a");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
   }
 }
 
-/** 角丸塗り長方形 */
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
