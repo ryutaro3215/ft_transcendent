@@ -18,6 +18,7 @@ export class GameSession {
   spectators = new Set<WebSocket>();
 
   inputLeft = { up: false, down: false };
+  private paused = true;
 
   state: RenderState = {
     width: W,
@@ -81,6 +82,11 @@ export class GameSession {
     this.state.leftY = Math.max(0, Math.min(H - PADDLE_H, this.state.leftY));
     this.state.rightY = Math.max(0, Math.min(H - PADDLE_H, this.state.rightY));
 
+    if (this.paused) {
+      this.broadcastState();
+      return;
+    }
+
     // ballの移動
     this.state.ballX += this.vx * dt;
     this.state.ballY += this.vy * dt;
@@ -95,8 +101,8 @@ export class GameSession {
 
     if (this.state.ballX - BALL_R <= 24 + PADDLE_W) {
       const withinY: boolean =
-        this.state.ballY >= this.state.leftY &&
-        this.state.ballY <= this.state.leftY + PADDLE_H;
+        this.state.ballY + BALL_R >= this.state.leftY &&
+        this.state.ballY - BALL_R <= this.state.leftY + PADDLE_H;
       if (withinY && this.vx < 0) {
         this.state.ballX = 24 + PADDLE_W + BALL_R;
         // Speed up
@@ -108,10 +114,10 @@ export class GameSession {
       }
     }
 
-    if (this.state.ballX + BALL_R >= -W - (24 + PADDLE_W)) {
+    if (this.state.ballX + BALL_R >= W - (24 + PADDLE_W)) {
       const withinY: boolean =
-        this.state.ballY >= this.state.rightY &&
-        this.state.ballY <= this.state.rightY + PADDLE_H;
+        this.state.ballY + BALL_R >= this.state.rightY &&
+        this.state.ballY - BALL_R <= this.state.rightY + PADDLE_H;
       if (withinY && this.vx > 0) {
         this.state.ballX = W - (24 + PADDLE_W) - BALL_R;
         this.vx = -Math.abs(this.vx) * 1.03;
@@ -130,12 +136,7 @@ export class GameSession {
       this.resetBall(-1);
     }
 
-    const payload: ServerMsg = { type: "state", state: this.state };
-    const msg = JSON.stringify(payload);
-    if (this.left?.readyState === WebSocket.OPEN) this.left.send(msg);
-    for (const ws of this.spectators) {
-      if (ws.readyState === WebSocket.OPEN) ws.send(msg);
-    }
+    this.broadcastState();
   }
 
   private resetBall(dir: -1 | 1) {
@@ -146,8 +147,30 @@ export class GameSession {
     this.vy = speed * (Math.random() * 0.4 - 0.2);
   }
 
+  togglePause() {
+    this.setPaused(!this.paused);
+  }
+
+  setPaused(paused: boolean) {
+    if (!this.timer) this.start();
+    if (this.paused === paused) return;
+    this.paused = paused;
+    if (!this.paused) {
+      this.lastTick = Date.now();
+    }
+  }
+
   setLeftInput(up: boolean, down: boolean) {
     this.inputLeft.up = up;
     this.inputLeft.down = down;
+  }
+
+  private broadcastState() {
+    const payload: ServerMsg = { type: "state", state: this.state };
+    const msg = JSON.stringify(payload);
+    if (this.left?.readyState === WebSocket.OPEN) this.left.send(msg);
+    for (const ws of this.spectators) {
+      if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+    }
   }
 }

@@ -35,7 +35,7 @@ export const registerPongWs: FastifyPluginAsync = async (
         wss.handleUpgrade(req, socket, head, (ws) => {
           wss.emit("connection", ws, req);
         });
-      } catch {
+      } catch (_err) {
         socket.destroy();
       }
     },
@@ -64,27 +64,31 @@ export const registerPongWs: FastifyPluginAsync = async (
       try {
         const msg = JSON.parse(text) as
           | { type: "join"; room?: string }
-          | { type: "input"; seq: number; up: boolean; down: boolean };
+          | { type: "input"; seq: number; up: boolean; down: boolean }
+          | { type: "command"; command: "togglePause" };
 
         if (msg.type === "input") {
           if (ws === session.left) {
             session.setLeftInput(!!msg.up, !!msg.down);
           }
+        } else if (msg.type === "command") {
+          if (ws === session.left && msg.command === "togglePause") {
+            session.togglePause();
+          }
         }
-      } catch {
+      } catch (_err) {
         safeSend(ws, { type: "error", message: "bad message" });
       }
     });
 
     ws.on("close", (code, reason) => {
-      console.log(
-        "[wss] close code=%d reason=%s",
-        code,
-        reason instanceof Buffer ? reason.toString() : String(reason),
-      ); // ★ 追記
+      const reasonText =
+        reason instanceof Buffer ? reason.toString() : String(reason);
+      console.log("[wss] close code=%d reason=%s", code, reasonText);
       if (ws === session.left) {
         session.left = undefined;
         session.setLeftInput(false, false);
+        session.setPaused(true);
       } else {
         session.spectators.delete(ws);
       }
@@ -93,16 +97,18 @@ export const registerPongWs: FastifyPluginAsync = async (
     ws.on("error", (err) => {
       console.error("[wss] error:", err);
     });
+  });
 
-    app.addHook("onClose", (_app, done) => {
-      try {
-        session.stop();
-        wss.clients.forEach((c) => c.close());
-        wss.close();
-      } finally {
-        done();
-      }
-    });
+  app.addHook("onClose", (_app, done) => {
+    try {
+      session.stop();
+      wss.clients.forEach((c) => c.close());
+      wss.close();
+    } catch (_err) {
+      // ignore shutdown errors
+    } finally {
+      done();
+    }
   });
 
   function safeSend(ws: WebSocket, obj: unknown) {
