@@ -3,11 +3,13 @@ export type InputState = { up: boolean; down: boolean };
 export class InputTracker {
   private state: InputState = { up: false, down: false };
   private onChange?: (s: InputState) => void;
+  private onTogglePause?: () => void;
   private keyPush = (e: KeyboardEvent) => this.handleKey(e, true);
   private keyRelease = (e: KeyboardEvent) => this.handleKey(e, false);
 
-  constructor(onChange?: (s: InputState) => void) {
+  constructor(onChange?: (s: InputState) => void, onTogglePause?: () => void) {
     this.onChange = onChange;
+    this.onTogglePause = onTogglePause;
   }
 
   // register eventlistener
@@ -38,6 +40,11 @@ export class InputTracker {
       if (this.state.down !== pressed) {
         this.state.down = pressed;
         changed = true;
+      }
+    } else if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+      if (pressed && !e.repeat) {
+        this.onTogglePause?.();
       }
     }
     // pass the current keybord event into onChange method, this parameter is sent to backend api
