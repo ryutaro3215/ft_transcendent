@@ -36,7 +36,7 @@ export const registerPongWs: FastifyPluginAsync = async (
         wss.handleUpgrade(req, socket, head, (ws) => {
           wss.emit("connection", ws, req);
         });
-      } catch {
+      } catch (_err) {
         socket.destroy();
       }
     },
@@ -83,20 +83,15 @@ export const registerPongWs: FastifyPluginAsync = async (
             session.togglePause();
           }
         }
-        case "start": {
-          session.stopRound();
-        }
-        default:
-          safeSend(ws, { type: "error", message: "bad message" });
+      } catch (_err) {
+        safeSend(ws, { type: "error", message: "bad message" });
       }
     });
 
     ws.on("close", (code, reason) => {
-      console.log(
-        "[wss] close code=%d reason=%s",
-        code,
-        reason instanceof Buffer ? reason.toString() : String(reason),
-      ); // ★ 追記
+      const reasonText =
+        reason instanceof Buffer ? reason.toString() : String(reason);
+      console.log("[wss] close code=%d reason=%s", code, reasonText);
       if (ws === session.left) {
         session.left = undefined;
         session.setLeftInput(false, false);
@@ -116,6 +111,7 @@ export const registerPongWs: FastifyPluginAsync = async (
       session.stop();
       wss.clients.forEach((c) => c.close());
       wss.close();
+    } catch (_err) {
     } finally {
       done();
     }

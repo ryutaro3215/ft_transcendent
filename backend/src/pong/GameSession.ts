@@ -160,8 +160,7 @@ export class GameSession {
       this.stopRound();
     } else if (this.state.ballX > W + 20) {
       this.state.leftScore++;
-      // this.resetBall(-1);
-      this.stopRound();
+      this.resetBall(-1);
     }
     this.broadcastState();
   }
