@@ -68,21 +68,20 @@ export const registerPongWs: FastifyPluginAsync = async (
 
       let msg: ClientMsg;
       try {
-        msg = JSON.parse(text) as ClientMsg;
-      } catch {
-        safeSend(ws, { type: "error", message: "bad message" });
-        return;
-      }
-      switch (msg.type) {
-        case "join": {
-          // あとでroomの実装をしたらここに追加
-          break;
-        }
-        case "input": {
+
+        const msg = JSON.parse(text) as
+          | { type: "join"; room?: string }
+          | { type: "input"; seq: number; up: boolean; down: boolean }
+          | { type: "command"; command: "togglePause" };
+
+        if (msg.type === "input") {
           if (ws === session.left) {
             session.setLeftInput(!!msg.up, !!msg.down);
           }
-          break;
+        } else if (msg.type === "command") {
+          if (ws === session.left && msg.command === "togglePause") {
+            session.togglePause();
+          }
         }
         case "start": {
           session.stopRound();
@@ -101,6 +100,7 @@ export const registerPongWs: FastifyPluginAsync = async (
       if (ws === session.left) {
         session.left = undefined;
         session.setLeftInput(false, false);
+        session.setPaused(true);
       } else {
         session.spectators.delete(ws);
       }

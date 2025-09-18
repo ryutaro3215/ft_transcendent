@@ -17,7 +17,7 @@ export class PongCanvasPage implements Component {
   private client: PongWsClient | null = null;
   private tracker = new InputTracker(
     (s) => this.client?.setInput(s.up, s.down),
-    () => this.client?.startGame(),
+    () => this.client?.togglePause(),
   );
 
   mount(container: HTMLElement) {
