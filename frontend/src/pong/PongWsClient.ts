@@ -85,6 +85,14 @@ export class PongWsClient {
     this.want.down = down;
   }
 
+  startGame() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const msg: ClientMsg = { type: "start" };
+    try {
+      this.ws.send(JSON.stringify(msg));
+    } catch {}
+  }
+
   private scheduleReconnect() {
     const t = this.backoff;
     this.backoff = Math.min(this.backoff * 1.7, 8000);

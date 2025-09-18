@@ -13,6 +13,7 @@ const TICK_HZ = 60;
 const TICK_MS = 1000 / TICK_HZ;
 
 export class GameSession {
+  private phase: "idle" | "playing" = "idle";
   left?: WebSocket;
   rightAI = true;
   spectators = new Set<WebSocket>();
@@ -33,11 +34,29 @@ export class GameSession {
     rightScore: 0,
   };
 
-  vx: number = BALL_SPEED0 * (Math.random() < 0.5 ? -1 : 1);
-  vy: number = BALL_SPEED0 * (Math.random() * 0.6 - 0.3);
+  // vx: number = BALL_SPEED0 * (Math.random() < 0.5 ? -1 : 1);
+  // vy: number = BALL_SPEED0 * (Math.random() * 0.6 - 0.3);
+  vx: number = 0;
+  vy: number = 0;
 
   lastTick = Date.now();
   timer: NodeJS.Timeout | null = null;
+
+  startRound(dir?: -1 | 1) {
+    if (this.phase === "playing") return;
+    this.resetBall(dir ?? (Math.random() < 0.5 ? -1 : 1));
+    this.phase = "playing";
+    this.start();
+  }
+
+  stopRound() {
+    this.stop();
+    this.phase = "idle";
+    this.vx = 0;
+    this.vy = 0;
+    this.state.ballX = W / 2;
+    this.state.ballY = H / 2;
+  }
 
   start() {
     if (this.timer) return;
@@ -67,12 +86,13 @@ export class GameSession {
     // move left paddle according to intent
     this.state.leftY += intent * PADDLE_SPEED * dt;
 
+    //右側はボールの動きを見ながら自動で動くAI的なもの
     // ballの中心とpaddleのy座標との差分を見て移動を決める
     // ただし、PADDLE_SPEEDとdtの積が移動の上限値
     if (this.rightAI) {
       const target = this.state.ballY - this.state.paddleH / 2;
       const dy = target - this.state.rightY;
-      const max = PADDLE_SPEED * dt * 0.9;
+      const max = PADDLE_SPEED * dt * 0.7;
 
       this.state.rightY += Math.max(-max, Math.min(max, dy));
     }
@@ -85,10 +105,13 @@ export class GameSession {
     this.state.ballX += this.vx * dt;
     this.state.ballY += this.vy * dt;
 
+    // ballの当たり判定
     if (this.state.ballY - BALL_R < 0) {
+      //こっちが上の壁判定
       this.state.ballY = BALL_R;
       this.vy = Math.abs(this.vy);
     } else if (this.state.ballY + BALL_R > H) {
+      //こっちが下の壁判定
       this.state.ballY = H - BALL_R;
       this.vy = -Math.abs(this.vy);
     }
@@ -98,6 +121,7 @@ export class GameSession {
         this.state.ballY + BALL_R >= this.state.leftY &&
         this.state.ballY - BALL_R <= this.state.leftY + PADDLE_H;
       if (withinY && this.vx < 0) {
+        //高さに収まってかつ、ボールの向きが左向きなら
         this.state.ballX = 24 + PADDLE_W + BALL_R;
         // Speed up
         this.vx = Math.abs(this.vx) * 1.03;
@@ -108,11 +132,14 @@ export class GameSession {
       }
     }
 
+    //AI(右側)の当たり判定
     if (this.state.ballX + BALL_R >= W - (24 + PADDLE_W)) {
+      //paddleの高さの範囲にボールがあるか
       const withinY: boolean =
         this.state.ballY + BALL_R >= this.state.rightY &&
         this.state.ballY - BALL_R <= this.state.rightY + PADDLE_H;
       if (withinY && this.vx > 0) {
+        //高さに収まってかつ、ボールの向きが右向きなら
         this.state.ballX = W - (24 + PADDLE_W) - BALL_R;
         this.vx = -Math.abs(this.vx) * 1.03;
         this.vy +=
@@ -122,14 +149,18 @@ export class GameSession {
       }
     }
 
+    // スコアの更新
     if (this.state.ballX < -20) {
       this.state.rightScore++;
-      this.resetBall(+1);
+      // this.resetBall(+1);
+      this.stopRound();
     } else if (this.state.ballX > W + 20) {
       this.state.leftScore++;
-      this.resetBall(-1);
+      // this.resetBall(-1);
+      this.stopRound();
     }
 
+    // 新しいballのstateをfrontにおくる
     const payload: ServerMsg = { type: "state", state: this.state };
     const msg = JSON.stringify(payload);
     if (this.left?.readyState === WebSocket.OPEN) this.left.send(msg);

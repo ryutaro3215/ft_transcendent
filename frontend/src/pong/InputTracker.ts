@@ -3,11 +3,13 @@ export type InputState = { up: boolean; down: boolean };
 export class InputTracker {
   private state: InputState = { up: false, down: false };
   private onChange?: (s: InputState) => void;
+  private onStart?: () => void;
   private keyPush = (e: KeyboardEvent) => this.handleKey(e, true);
   private keyRelease = (e: KeyboardEvent) => this.handleKey(e, false);
 
-  constructor(onChange?: (s: InputState) => void) {
+  constructor(onChange?: (s: InputState) => void, onStart?: () => void) {
     this.onChange = onChange;
+    this.onStart = onStart;
   }
 
   // register eventlistener
@@ -26,6 +28,15 @@ export class InputTracker {
   }
 
   private handleKey(e: KeyboardEvent, pressed: boolean) {
+    //This section controll space key state
+    if (e.code === "space") {
+      if (pressed && !e.repeat) {
+        e.preventDefault();
+        this.onStart?.();
+      }
+      return;
+    }
+    // This section controll paddle key state
     let changed = false;
     if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
       // if pressed state isn't equal, change this.state and set up the changed flag to true
