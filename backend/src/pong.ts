@@ -93,16 +93,16 @@ export const registerPongWs: FastifyPluginAsync = async (
     ws.on("error", (err) => {
       console.error("[wss] error:", err);
     });
+  });
 
-    app.addHook("onClose", (_app, done) => {
-      try {
-        session.stop();
-        wss.clients.forEach((c) => c.close());
-        wss.close();
-      } finally {
-        done();
-      }
-    });
+  app.addHook("onClose", (_app, done) => {
+    try {
+      session.stop();
+      wss.clients.forEach((c) => c.close());
+      wss.close();
+    } finally {
+      done();
+    }
   });
 
   function safeSend(ws: WebSocket, obj: unknown) {

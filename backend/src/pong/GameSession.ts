@@ -95,8 +95,8 @@ export class GameSession {
 
     if (this.state.ballX - BALL_R <= 24 + PADDLE_W) {
       const withinY: boolean =
-        this.state.ballY >= this.state.leftY &&
-        this.state.ballY <= this.state.leftY + PADDLE_H;
+        this.state.ballY + BALL_R >= this.state.leftY &&
+        this.state.ballY - BALL_R <= this.state.leftY + PADDLE_H;
       if (withinY && this.vx < 0) {
         this.state.ballX = 24 + PADDLE_W + BALL_R;
         // Speed up
@@ -108,10 +108,10 @@ export class GameSession {
       }
     }
 
-    if (this.state.ballX + BALL_R >= -W - (24 + PADDLE_W)) {
+    if (this.state.ballX + BALL_R >= W - (24 + PADDLE_W)) {
       const withinY: boolean =
-        this.state.ballY >= this.state.rightY &&
-        this.state.ballY <= this.state.rightY + PADDLE_H;
+        this.state.ballY + BALL_R >= this.state.rightY &&
+        this.state.ballY - BALL_R <= this.state.rightY + PADDLE_H;
       if (withinY && this.vx > 0) {
         this.state.ballX = W - (24 + PADDLE_W) - BALL_R;
         this.vx = -Math.abs(this.vx) * 1.03;
