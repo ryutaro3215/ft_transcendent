@@ -50,7 +50,7 @@ export class InputTracker {
         this.state.down = pressed;
         changed = true;
       }
-    } else if (e.code === "Space" || e.key === " ") {
+    } else if (e.key === "Space" || e.key === " ") {
       e.preventDefault();
       if (pressed && !e.repeat) {
         this.onTogglePause?.();
