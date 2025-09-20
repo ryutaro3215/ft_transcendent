@@ -8,6 +8,7 @@ export class RegisterPage implements Page {
   private root!: HTMLElement;
 
   constructor(private ctx: RouteContext) {}
+
   private form = new RegisterForm({
     onSubmit: async ({ name, email, password }) => {
       const res = await AuthApi.register({
@@ -24,6 +25,16 @@ export class RegisterPage implements Page {
     },
   });
 
+  private apiOrigin = "https://localhost:3443";
+
+  private startGithubOAuth = () => {
+    const redirectTo = "/post-auth";
+    const url =
+      `${this.apiOrigin}/api/auth/github/login?redirect_to=` +
+      encodeURIComponent(redirectTo);
+    window.location.href = url;
+  };
+
   mount(container: HTMLElement) {
     this.root = h(
       "section",
@@ -32,6 +43,22 @@ export class RegisterPage implements Page {
         "div",
         { className: "flex justify-center" },
         h("div", { className: "w-full max-w-md" }),
+      ),
+      h(
+        "div",
+        { className: "mt-6 flex justify-center" },
+        h(
+          "button",
+          {
+            type: "button",
+            className:
+              "inline-flex items-center gap-2 rounded-md border border-slate-600 px-4 py-2 " +
+              "bg-slate-800 hover:bg-slate-700 active:bg-slate-700 " +
+              "text-slate-100 w-full max-w-md justify-center",
+            onclick: this.startGithubOAuth,
+          },
+          "Register with Github",
+        ),
       ),
       h(
         "p",

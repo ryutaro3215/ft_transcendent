@@ -9,15 +9,15 @@ export default fp(async (app) => {
   db.pragma("busy_timeout = 5000");
 
   db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL,
-      imageUrl TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+		CREATE TABLE IF NOT EXISTS users (
+		  id          INTEGER PRIMARY KEY,
+		  name        TEXT,
+		  email       TEXT UNIQUE,
+		  password    TEXT,
+		  avatar_url  TEXT,
+		  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+		  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+		);
 
     CREATE TRIGGER IF NOT EXISTS trg_users_updated_at
     AFTER UPDATE ON users
@@ -25,7 +25,6 @@ export default fp(async (app) => {
       UPDATE users SET updated_at = datetime('now') WHERE id = OLD.id;
     END;
   `);
-
   db.exec(`
 		CREATE TABLE IF NOT EXISTS refresh_tokens (
 		  jti        TEXT PRIMARY KEY,                 
@@ -41,6 +40,19 @@ export default fp(async (app) => {
 		
 		CREATE INDEX IF NOT EXISTS idx_refresh_user          ON refresh_tokens(user_id);
 		CREATE INDEX IF NOT EXISTS idx_refresh_valid_by_user ON refresh_tokens(user_id, revoked, expires_at);
+`);
+
+  db.exec(`
+		CREATE TABLE IF NOT EXISTS auth_providers (
+		  id                INTEGER PRIMARY KEY,
+		  user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		  provider          TEXT NOT NULL,
+		  provider_user_id  TEXT NOT NULL,
+		  provider_login    TEXT,
+		  provider_email    TEXT,
+		  created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+		  UNIQUE(provider, provider_user_id)
+		);
 `);
 
   app.decorate("db", db);

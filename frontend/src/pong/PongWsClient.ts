@@ -89,6 +89,7 @@ export class PongWsClient {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const msg: ClientMsg = { type: "command", command: "togglePause" };
     try {
+      // console.log("Send start signal");
       this.ws.send(JSON.stringify(msg));
     } catch {}
   }

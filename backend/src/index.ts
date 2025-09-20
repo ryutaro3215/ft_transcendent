@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import fs from "node:fs";
-import { userRoutes } from "./auth";
+import { userRoutes } from "./auth/auth";
 import sqlitePlugin from "./database/sqlite";
 import jwt from "@fastify/jwt";
 import cookie from "@fastify/cookie";
@@ -8,6 +8,8 @@ import csrf from "@fastify/csrf-protection";
 import dotenv from "dotenv";
 import cors from "@fastify/cors";
 import { registerPongWs } from "./pong";
+import { githubLoginRoute } from "./auth/github";
+import { githubCallbackRoute } from "./auth/githubRedirect";
 dotenv.config();
 
 const app = Fastify({
@@ -46,6 +48,8 @@ app.register(csrf, {
 
 await app.register(userRoutes);
 await app.register(registerPongWs);
+await app.register(githubLoginRoute);
+await app.register(githubCallbackRoute);
 
 // app.get("/", () => {
 //   console.log("API server connection is running");

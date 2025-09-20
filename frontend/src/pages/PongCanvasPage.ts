@@ -55,8 +55,10 @@ export class PongCanvasPage implements Component {
     ) as HTMLElement;
     this.view.mount(host);
 
+    //Start Tracking input
     this.tracker.start();
 
+    // Make PongWsClient
     this.client = new PongWsClient({
       apiOrigin: API_ORIGIN,
       path: "/ws/pong",

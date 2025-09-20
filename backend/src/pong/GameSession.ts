@@ -13,13 +13,13 @@ const TICK_HZ = 60;
 const TICK_MS = 1000 / TICK_HZ;
 
 export class GameSession {
-  private phase: "idle" | "playing" = "idle";
+  phase: "idle" | "playing" = "idle";
   left?: WebSocket;
   rightAI = true;
   spectators = new Set<WebSocket>();
 
   inputLeft = { up: false, down: false };
-  private paused = true;
+  paused = true;
 
   state: RenderState = {
     width: W,
@@ -47,6 +47,7 @@ export class GameSession {
     if (this.phase === "playing") return;
     this.resetBall(dir ?? (Math.random() < 0.5 ? -1 : 1));
     this.phase = "playing";
+    this.paused = false;
     this.start();
   }
 
@@ -160,7 +161,8 @@ export class GameSession {
       this.stopRound();
     } else if (this.state.ballX > W + 20) {
       this.state.leftScore++;
-      this.resetBall(-1);
+      // this.resetBall(-1);
+      this.stopRound();
     }
     this.broadcastState();
   }

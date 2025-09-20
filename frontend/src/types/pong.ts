@@ -15,7 +15,7 @@ export type RenderState = {
 export type ClientMsg =
   | { type: "join"; room?: string }
   | { type: "input"; seq: number; up: boolean; down: boolean }
-  | { type: "command"; command: "togglePause" };
+  | { type: "command"; command: "togglePause" | "start" };
 
 export type ServerMsg =
   | { type: "hello"; you?: string }

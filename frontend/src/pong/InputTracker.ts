@@ -28,14 +28,14 @@ export class InputTracker {
   }
 
   private handleKey(e: KeyboardEvent, pressed: boolean) {
-    //This section controll space key state
-    if (e.code === "space") {
-      if (pressed && !e.repeat) {
-        e.preventDefault();
-        this.onStart?.();
-      }
-      return;
-    }
+    // This section controll space key state
+    // if (e.code === "Space") {
+    //   if (pressed && !e.repeat) {
+    //     e.preventDefault();
+    //     this.onTogglePause?.();
+    //   }
+    //   return;
+    // }
     // This section controll paddle key state
     let changed = false;
     if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
@@ -53,6 +53,7 @@ export class InputTracker {
     } else if (e.key === "Space" || e.key === " ") {
       e.preventDefault();
       if (pressed && !e.repeat) {
+        console.log("Space pressed");
         this.onTogglePause?.();
       }
     }

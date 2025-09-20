@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from "fastify";
-import { RegisterSchema, LoginSchema } from "./schemas/auth";
+import { LoginSchema, RegisterSchema } from "../schemas/auth";
 import bcrypt from "bcrypt";
 import { FastifyRequest, FastifyReply } from "fastify";
 import { randomUUID } from "node:crypto";
@@ -34,7 +34,12 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
 					 VALUES (@name, @email, @password)`,
         );
 
-        const info = stmt.run({
+        // const info = stmt.run({
+        //   name: name,
+        //   email: email,
+        //   password: hashedPassword,
+        // });
+        stmt.run({
           name: name,
           email: email,
           password: hashedPassword,
@@ -47,7 +52,7 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
         rep.log.error({ err: e }, "register failed");
         return rep.code(400).send({
           ok: false,
-          error: e?.message ?? "Bad request",
+          // error: e?.message ?? "Bad request",
         });
       }
     },
@@ -188,7 +193,7 @@ export const userRoutes: FastifyPluginAsync = async (app) => {
     async (req: FastifyRequest, rep: FastifyReply) => {
       const { sub } = req.user as { sub: string };
       const row = app.db
-        .prepare("SELECT id, name, email FROM users WHERE id = ?")
+        .prepare("SELECT id, name, email, avatar_url FROM users WHERE id = ?")
         .get(Number(sub)) as
         | { id: number; name: string; email: string }
         | undefined;

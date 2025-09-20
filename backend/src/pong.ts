@@ -4,7 +4,7 @@ import type { Socket } from "node:net";
 import { WebSocketServer, WebSocket } from "ws";
 import { GameSession } from "./pong/GameSession";
 import { FastifyPluginAsync } from "fastify";
-import type { ClientMsg } from "./types/pong";
+// import type { ClientMsg } from "./types/pong";
 
 const ALLOW_ORIGIN = process.env.FRONT_ORIGIN ?? "https://localhost:5173";
 
@@ -66,21 +66,18 @@ export const registerPongWs: FastifyPluginAsync = async (
         text = Buffer.from(data).toString("utf-8");
       else text = String(data);
 
-      let msg: ClientMsg;
       try {
-
-        const msg = JSON.parse(text) as
-          | { type: "join"; room?: string }
-          | { type: "input"; seq: number; up: boolean; down: boolean }
-          | { type: "command"; command: "togglePause" };
-
+        const msg = JSON.parse(text);
         if (msg.type === "input") {
           if (ws === session.left) {
             session.setLeftInput(!!msg.up, !!msg.down);
           }
-        } else if (msg.type === "command") {
-          if (ws === session.left && msg.command === "togglePause") {
-            session.togglePause();
+        } else if (msg.type === "command" && ws === session.left) {
+          if (msg.command === "togglePause") {
+            if (session.phase === "idle") session.startRound();
+            else session.togglePause();
+          } else if (msg.commnad === "start") {
+            session.startRound();
           }
         }
       } catch (_err) {
